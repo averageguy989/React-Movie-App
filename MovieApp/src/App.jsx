@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Search from './components/Search';
 import Spinner from './components/Spinner';
-import MovieCard from './components/movieCard';
+import MovieCard from './components/MovieCard';
 import { updateSearchCount,getTrendingMovies } from './services/appwrite';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
