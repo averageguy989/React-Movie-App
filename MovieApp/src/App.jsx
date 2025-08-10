@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Search from './components/Search';
 import Spinner from './components/Spinner';
 import MovieCard from './components/movieCard';
+import { updateSearchCount,getTrendingMovies } from './services/appwrite';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -21,7 +22,18 @@ const App = () => {
   const [movieList,setMovieList] = useState([]);
   const [isLoading,setIsLoading] = useState(false);
   const [debouncedTerm,setDebouncedTerm] = useState("");
+  const [trendingMovies,setTrendingMovies] = useState([]);
 
+
+  const loadTrendingMovies = async () =>{
+    try{
+      const movies = await getTrendingMovies();
+      setTrendingMovies(movies);
+
+    } catch(error){
+      console.error(`Erorr fetching the trending movies:${error}`);
+    }
+  }
 
 
 
@@ -41,8 +53,12 @@ const App = () => {
         setMovieList([]);
         return;
       }
-
+      
       setMovieList(data.results || []);
+      if(query && data.results.length>0){
+        updateSearchCount(searchTerm,data.results[0]);
+      }
+
     } catch(error){
 
       console.error(`Error fetching the movies: ${error}`);
@@ -54,6 +70,10 @@ const App = () => {
       },1500)
     }
   }
+
+  useEffect(() => {
+    loadTrendingMovies();
+  },[])
 
   useEffect(() => {
     // Directly set the timeout and store its ID
@@ -85,6 +105,22 @@ const App = () => {
             <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
             
           </header>
+          {trendingMovies.length > 0 && (
+            <section className='trending'>
+              <h2>Trending Movies</h2>
+
+              <ul>
+                {
+                  trendingMovies.map((movie,index)=>(
+                    <li key={movie.$id}>
+                      <p>{index+1}</p>
+                      <img src={movie.poster_url} alt="movie title"/>
+                    </li>
+                  ))
+                }
+              </ul>
+            </section>
+          )}
           <section className='all-movies'>
             <h2 className='mt-[40px]'>All Movies</h2>
             {
@@ -92,7 +128,7 @@ const App = () => {
                 <Spinner/>
               ): errorMessage ? (
                 <p className='text-red-500'>{errorMessage}</p>
-              ) : (
+              ) : movieList.length != 0 ? (
                 <ul>
                   {
                     movieList.map((movie) => (
@@ -100,6 +136,8 @@ const App = () => {
                     ))
                   }
                 </ul>
+              ): (
+                <h1 className='flex items-center justify-center text-purple-900'>No movies Found</h1>
               )
             }
           </section>
